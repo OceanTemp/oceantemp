@@ -1,0 +1,98 @@
+﻿@page "/"
+@using Water.Models
+@using Water.Data
+@inject IApiService ApiService
+
+<div class="mt-5">
+	<PageTitle>Index</PageTitle>
+	<br/>
+<div class="d-flex justify-content-center mt-2">
+	<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="blue" class="bi bi-droplet-fill" viewBox="0 0 16 16">
+		<path d="M8 16a6 6 0 0 0 6-6c0-1.655-1.122-2.904-2.432-4.362C10.254 4.176 8.75 2.503 8 0c0 0-6 5.686-6 10a6 6 0 0 0 6 6ZM6.646 4.646l.708.708c-.29.29-1.128 1.311-1.907 2.87l-.894-.448c.82-1.641 1.717-2.753 2.093-3.13Z"/>
+	</svg>
+	</div>
+	<EditForm Model="@station" OnSubmit="GetStation">
+		<div class="d-flex justify-content-center mt-5">
+			<InputSelect TValue="string" @bind-Value="@key" required class="btn-lg btn-light">
+				@foreach (var station in keyToName)
+				{
+					<option value="@station.Key">@station.Value</option>
+				}
+			</InputSelect>
+		</div>
+		<div class="d-flex justify-content-center mt-4">
+		<p>
+			<button type="submit" class="btn btn-info btn-lg mt-1">Select Station</button>
+		</p>
+	</div>
+	</EditForm>
+	<br/>
+	<hr/>
+
+@if (loadedOceanData)
+{
+	<div class="container text-center">
+		
+		<h2>@oceanResults.Station.Name</h2>
+
+		@foreach (var value in oceanResults.Value)
+		{
+
+			<h5>@value.Value Celsius</h5>
+			<h5>@value.Quality Quality</h5>
+			<h5>@value.Depth Depth(m)</h5>
+		}
+	</div>
+}
+	
+</div>
+@code
+{
+	OceanData oceanResults = new();
+	bool initialized;
+	bool loadedOceanData;
+	string key = "";
+
+	Station station = new();
+
+	private Dictionary<string, string> keyToName = new()
+	{
+		{"2541","UDDEVALLA"},
+		{"33084","ONSALA"},
+		{"33033","BROFJORDEN WR BOJ"},
+		{"33015","VÄDERÖARNA WR BOJ"},
+		{"33003","FINNGRUNDET WR BOJ"},
+		{"33008","KNOLLS GRUND BOJ"},
+		{"2507","LANDSORT NORRA"},
+		{"2088","KUNGSHOLMSFORT"},
+	};
+
+
+	protected override async Task OnInitializedAsync()
+	{
+		initialized = true;
+
+	}
+
+	private async Task GetStation()
+	{
+		if (keyToName.ContainsKey(key) && key != "")
+		{
+			await GetOceanData();
+
+		}
+		else
+		{
+			await OnInitializedAsync();
+			
+		}
+		
+	}
+
+	private async Task GetOceanData()
+	{
+		oceanResults = await ApiService.GetOceansResultPerKeyAsync(key);
+		
+		loadedOceanData = true;
+	}
+}
